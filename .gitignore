@@ -1,0 +1,14 @@
+# Xcode / XcodeGen
+*.xcodeproj/
+*.xcworkspace/
+!Packages/**/*.xcworkspace/
+xcuserdata/
+DerivedData/
+build/
+*.xcresult
+# SwiftPM
+.build/
+.swiftpm/
+Package.resolved
+# macOS
+.DS_Store
