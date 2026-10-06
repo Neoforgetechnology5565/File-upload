@@ -51,19 +51,20 @@ jobs:
 
       - name: Build and run unit tests
         run: |
-          set -o pipefail
+          status=0
           xcodebuild test \
             -project LiDARScanner.xcodeproj \
             -scheme LiDARScanner \
             -destination "id=${{ steps.sim.outputs.udid }}" \
             -only-testing:LiDARScannerTests \
             CODE_SIGNING_ALLOWED=NO \
-            | tee xcodebuild-test.log | grep -E "error:|warning: unre|Test Case.*failed|Executed|\*\* " || true
-          test "${PIPESTATUS[0]}" -eq 0
+            > xcodebuild-test.log 2>&1 || status=$?
+          grep -E "error:|Test Case.*failed|Executed|\*\* " xcodebuild-test.log | head -300 || true
+          exit $status
 
       - name: Build unsigned device app (.ipa)
         run: |
-          set -o pipefail
+          status=0
           xcodebuild archive \
             -project LiDARScanner.xcodeproj \
             -scheme LiDARScanner \
@@ -71,8 +72,9 @@ jobs:
             -destination "generic/platform=iOS" \
             -archivePath build/LiDARScanner.xcarchive \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            | tee xcodebuild-archive.log | grep -E "error:|\*\* " || true
-          test "${PIPESTATUS[0]}" -eq 0
+            > xcodebuild-archive.log 2>&1 || status=$?
+          grep -E "error:|\*\* " xcodebuild-archive.log | head -300 || true
+          if [ $status -ne 0 ]; then exit $status; fi
           mkdir -p build/Payload
           cp -R build/LiDARScanner.xcarchive/Products/Applications/LiDARScanner.app build/Payload/
           (cd build && zip -qry LiDARScanner-unsigned.ipa Payload)
