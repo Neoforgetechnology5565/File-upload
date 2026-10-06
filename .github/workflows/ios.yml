@@ -1,0 +1,93 @@
+# Builds and tests the app on GitHub-hosted runners, so no local Mac is needed.
+# - core-tests: ScanCore package tests on Linux (fast, cheap)
+# - ios: XcodeGen project, unit tests on the iOS Simulator, and an unsigned
+#        .ipa artifact that can be signed and installed (see Docs/INSTALL_WITHOUT_MAC.md)
+name: iOS CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-tests:
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: ScanCore tests
+        working-directory: Packages/ScanCore
+        run: swift test
+
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)"
+          xcodebuild -version
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Pick simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json,sys
+          d=json.load(sys.stdin)["devices"]
+          c=[x for k,v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")]
+          print(c[-1]["udid"])')
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Build and run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project LiDARScanner.xcodeproj \
+            -scheme LiDARScanner \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:LiDARScannerTests \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee xcodebuild-test.log | grep -E "error:|warning: unre|Test Case.*failed|Executed|\*\* " || true
+          test "${PIPESTATUS[0]}" -eq 0
+
+      - name: Build unsigned device app (.ipa)
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project LiDARScanner.xcodeproj \
+            -scheme LiDARScanner \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/LiDARScanner.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tee xcodebuild-archive.log | grep -E "error:|\*\* " || true
+          test "${PIPESTATUS[0]}" -eq 0
+          mkdir -p build/Payload
+          cp -R build/LiDARScanner.xcarchive/Products/Applications/LiDARScanner.app build/Payload/
+          (cd build && zip -qry LiDARScanner-unsigned.ipa Payload)
+
+      - name: Upload .ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiDARScanner-unsigned-ipa
+          path: build/LiDARScanner-unsigned.ipa
+          retention-days: 14
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-logs
+          path: "*.log"
+          retention-days: 7
