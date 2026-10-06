@@ -94,15 +94,16 @@ enum RoomScanProcessor {
         try JSONEncoder().encode(room)
     }
 
-    static func instructionMessage(_ instruction: RoomCaptureSession.Instruction) -> String {
+    /// Maps RoomPlan's coaching instructions onto the app's shared guidance model.
+    static func feedback(for instruction: RoomCaptureSession.Instruction) -> ScanFeedback {
         switch instruction {
-        case .normal: return "Tracking — keep scanning the room"
-        case .moveCloseToWall: return "Move closer to the wall"
-        case .moveAwayFromWall: return "Move away from the wall"
-        case .slowDown: return "Move slowly"
-        case .turnOnLight: return "Turn on more lights"
-        case .lowTexture: return "Low tracking quality — aim at areas with more detail"
-        @unknown default: return "Keep scanning"
+        case .normal: return .tracking
+        case .moveCloseToWall: return .moveCloser
+        case .moveAwayFromWall: return .moveFarther
+        case .slowDown: return .moveSlowly
+        case .turnOnLight: return .lowTracking("turn on more lights")
+        case .lowTexture: return .lowTracking("aim at areas with more visible detail")
+        @unknown default: return .tracking
         }
     }
 }
