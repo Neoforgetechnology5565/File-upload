@@ -75,13 +75,12 @@ public enum LengthUnit: String, Codable, CaseIterable, Identifiable, Sendable {
         return "\(Self.formatNumber(convert(squareMeters: squareMeters), digits: digits)) \(symbol)²"
     }
 
+    /// Fixed-point, locale-independent formatting ("1234.50"). Implemented
+    /// with `String(format:)` because `NumberFormatter` fraction-digit limits
+    /// are not honored on every platform (e.g. swift-corelibs-foundation).
     static func formatNumber(_ value: Double, digits: Int) -> String {
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.numberStyle = .decimal
-        formatter.usesGroupingSeparator = false
-        formatter.minimumFractionDigits = digits
-        formatter.maximumFractionDigits = digits
-        return formatter.string(from: NSNumber(value: value)) ?? String(value)
+        let clamped = max(0, min(digits, 6))
+        let text = String(format: "%.\(clamped)f", value)
+        return text == "-0" || text.hasPrefix("-0.") && Double(text) == 0 ? String(text.dropFirst()) : text
     }
 }

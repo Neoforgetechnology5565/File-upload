@@ -15,11 +15,8 @@ final class ScanMetadataTests: XCTestCase {
         scan.exports = [ExportRecord(format: .ply, fileName: "Kitchen.ply", byteCount: 123)]
         scan.metadata = ["preset": "space"]
 
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let decoded = try decoder.decode(Scan.self, from: encoder.encode(scan))
+        // Default date coding is exact; ISO-8601 would drop sub-second precision.
+        let decoded = try JSONDecoder().decode(Scan.self, from: JSONEncoder().encode(scan))
         XCTAssertEqual(decoded, scan)
     }
 
