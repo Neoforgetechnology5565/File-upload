@@ -74,8 +74,34 @@ one automatically. To turn on update notifications, open TestFlight › the app
 * **Upload rejected for a duplicate build number:** run the workflow again.
   Each run uses a new build number.
 
-## Alternative without paying: Windows PC + Sideloadly
+## Free option (no developer account): SideStore
 
-This route is free but not one-tap. You install over USB with Sideloadly
-(sideloadly.io) using a free Apple ID, and must reinstall every 7 days. Use the
-`LiDARScanner-unsigned-ipa` artifact from the latest **iOS CI** run.
+You need a Windows PC or a Mac **once** for setup. After that, everything
+happens on the iPhone. Apps signed with a free Apple ID last 7 days, and you
+refresh them in SideStore with one tap. At most 3 such apps can be installed.
+
+Download link for the latest build (works on the iPhone, no login needed):
+<https://github.com/olatundelukman5565-svg/File-upload/releases/download/latest-build/LiDARScanner.ipa>
+
+### On the computer (once)
+1. Windows only: install **iTunes** and **iCloud** from apple.com, not from
+   the Microsoft Store.
+2. Follow the official installation guide at <https://sidestore.io> to install
+   SideStore onto the iPhone over USB with your Apple ID. That guide stays
+   current with SideStore's installer; follow it exactly.
+
+### On the iPhone
+1. In Settings › Privacy & Security, turn on **Developer Mode**. This needs a
+   restart.
+2. In Settings › General › VPN & Device Management, trust your Apple ID.
+3. Open the download link above in Safari, then tap Download.
+4. Open SideStore, go to My Apps, tap **+**, and choose `LiDARScanner.ipa`
+   from Downloads.
+5. Every 7 days, open SideStore and tap **Refresh All**. Opening SideStore
+   regularly is enough to keep the app working.
+
+## Alternative: Sideloadly (Windows/Mac)
+
+This is simpler to set up, but every 7-day refresh needs the computer. Install
+Sideloadly from sideloadly.io, connect the iPhone by USB, drag in the `.ipa`,
+enter your Apple ID, and click Start.

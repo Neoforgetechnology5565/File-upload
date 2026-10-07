@@ -9,6 +9,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -85,6 +88,20 @@ jobs:
           name: LiDARScanner-unsigned-ipa
           path: build/LiDARScanner-unsigned.ipa
           retention-days: 14
+
+      # Public, login-free download link for the latest build:
+      # https://github.com/<owner>/<repo>/releases/download/latest-build/LiDARScanner.ipa
+      - name: Publish latest build
+        if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp build/LiDARScanner-unsigned.ipa build/LiDARScanner.ipa
+          gh release delete latest-build --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
+          gh release create latest-build build/LiDARScanner.ipa --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "Latest build" \
+            --notes "Unsigned build of $GITHUB_SHA. Install with SideStore or Sideloadly (see Docs/INSTALL_WITHOUT_MAC.md)."
 
       - name: Upload logs
         if: always()
