@@ -60,7 +60,8 @@ final class MeshTests: XCTestCase {
         try box.validate()
         XCTAssertEqual(box.vertexCount, 24)
         XCTAssertEqual(box.triangleCount, 12)
-        XCTAssertEqual(MeshStatistics.surfaceArea(box), 2 * (2 * 1 + 2 * 0.5 + 1 * 0.5), accuracy: 1e-5)
+        let expectedArea: Float = 7 // 2 × (2·1 + 2·0.5 + 1·0.5)
+        XCTAssertEqual(MeshStatistics.surfaceArea(box), expectedArea, accuracy: 1e-5)
         // Outward winding: face normal agrees with stored vertex normal.
         for face in 0..<box.triangleCount {
             let (a, b, c) = box.triangle(face)

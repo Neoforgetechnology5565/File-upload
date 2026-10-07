@@ -65,15 +65,13 @@ final class ScanRecord {
 enum ScanRecordCoding {
     static let currentPayloadVersion = 1
 
+    /// Uses the default (exact `Double`) date encoding: ISO-8601 would drop
+    /// sub-second precision and dates would not round-trip.
     static func encode(_ scan: Scan) throws -> Data {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        return try encoder.encode(scan)
+        try JSONEncoder().encode(scan)
     }
 
     static func decode(_ data: Data) throws -> Scan {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(Scan.self, from: data)
+        try JSONDecoder().decode(Scan.self, from: data)
     }
 }
